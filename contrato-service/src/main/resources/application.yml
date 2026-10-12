@@ -5,15 +5,18 @@ spring:
   application:
     name: contrato-service
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/freela_db}
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: jdbc:postgresql://localhost:5432/freela_db
+    username: freela
+    password: freela
   jpa:
     hibernate:
       ddl-auto: update
     show-sql: true
   kafka:
     bootstrap-servers: ${KAFKA_URL:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
 
 management:
   endpoints:
@@ -33,10 +36,13 @@ eureka:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
+    ip-address: 127.0.0.1
+    hostname: 127.0.0.1
+    instance-id: 127.0.0.1:${spring.application.name}:${server.port}
 
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level service=${spring.application.name} thread=%thread logger=%logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level service=${spring.application.name} traceId=%X{traceId:-} spanId=%X{spanId:-} thread=%thread logger=%logger{36} - %msg%n"
   level:
     root: INFO
     br.com.freela: INFO

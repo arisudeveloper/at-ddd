@@ -19,13 +19,13 @@ public class ApiGatewayApplication {
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
                 .route("contrato-service", r -> r.path("/api/contratos", "/api/contratos/**")
-                        .uri("lb://CONTRATO-SERVICE"))
+                        .uri("http://localhost:8081"))
                 .route("notificacao-service", r -> r.path("/api/notificacoes", "/api/notificacoes/**")
-                        .uri("lb://NOTIFICACAO-SERVICE"))
+                        .uri("http://localhost:8082"))
                 .route("reputacao-service", r -> r.path("/api/reputacoes", "/api/reputacoes/**")
-                        .uri("lb://REPUTACAO-SERVICE"))
+                        .uri("http://localhost:8083"))
                 .route("auditoria-service", r -> r.path("/api/auditoria", "/api/auditoria/**")
-                        .uri("lb://AUDITORIA-SERVICE"))
+                        .uri("http://localhost:8084"))
                 .build();
     }
 }

@@ -32,39 +32,63 @@ public class ContratoApplicationService {
     public Contrato criar(CriarContratoCommand cmd) {
         log.info("contrato.criacao.inicio clienteId={} freelancerId={} titulo={} valor={}",
                 cmd.clienteId(), cmd.freelancerId(), cmd.titulo(), cmd.valor());
+
         Contrato contrato = Contrato.criar(cmd.clienteId(), cmd.freelancerId(), cmd.titulo(), cmd.valor());
         log.info("contrato.dominio.criado contratoId={} status={} domainEvents={}",
                 contrato.id(), contrato.status(), contrato.domainEvents().size());
+
+        String correlationId = (cmd.correlationId() != null && !cmd.correlationId().isBlank())
+                ? cmd.correlationId()
+                : UUID.randomUUID().toString();
+
+        publicarEventos(contrato, correlationId);
+
         Contrato salvo = repository.salvar(contrato);
-        publicarEventos(salvo);
         log.info("contrato.criacao.sucesso contratoId={} clienteId={} freelancerId={} status={}",
                 salvo.id(), salvo.clienteId(), salvo.freelancerId(), salvo.status());
+
         return salvo;
     }
 
     @Transactional
     public Contrato registrarEntrega(UUID id) {
+        return registrarEntrega(id, null);
+    }
+
+    @Transactional
+    public Contrato registrarEntrega(UUID id, String correlationId) {
         log.info("contrato.entrega.inicio contratoId={}", id);
         Contrato contrato = buscar(id);
         contrato.registrarEntrega();
+
+        String corrId = (correlationId != null && !correlationId.isBlank()) ? correlationId : UUID.randomUUID().toString();
+        publicarEventos(contrato, corrId);
+
         Contrato salvo = repository.salvar(contrato);
-        publicarEventos(salvo);
         log.info("contrato.entrega.sucesso contratoId={} status={}", salvo.id(), salvo.status());
         return salvo;
     }
 
     @Transactional
     public Contrato concluir(UUID id) {
+        return concluir(id, null);
+    }
+
+    @Transactional
+    public Contrato concluir(UUID id, String correlationId) {
         log.info("contrato.conclusao.inicio contratoId={}", id);
         Contrato contrato = buscar(id);
         contrato.concluir();
+
+        String corrId = (correlationId != null && !correlationId.isBlank()) ? correlationId : UUID.randomUUID().toString();
+        publicarEventos(contrato, corrId);
+
         Contrato salvo = repository.salvar(contrato);
-        publicarEventos(salvo);
         log.info("contrato.conclusao.sucesso contratoId={} status={}", salvo.id(), salvo.status());
         return salvo;
     }
 
-    private void publicarEventos(Contrato contrato) {
+    private void publicarEventos(Contrato contrato, String correlationId) {
         for (DomainEvent event : contrato.pullDomainEvents()) {
             if (event instanceof ContratoCriado e) {
                 ContratoEventoDto dto = new ContratoEventoDto(
@@ -76,7 +100,7 @@ public class ContratoApplicationService {
                         e.titulo(),
                         e.valor(),
                         e.occurredAt(),
-                        UUID.randomUUID().toString()
+                        correlationId
                 );
                 eventPublisher.publicar(TOPICO_CONTRATOS, dto);
             } else if (event instanceof EntregaRegistrada e) {
@@ -89,7 +113,7 @@ public class ContratoApplicationService {
                         contrato.titulo(),
                         contrato.valor(),
                         e.occurredAt(),
-                        UUID.randomUUID().toString()
+                        correlationId
                 );
                 eventPublisher.publicar(TOPICO_CONTRATOS, dto);
             } else if (event instanceof ContratoConcluido e) {
@@ -102,7 +126,7 @@ public class ContratoApplicationService {
                         contrato.titulo(),
                         e.valor(),
                         e.occurredAt(),
-                        UUID.randomUUID().toString()
+                        correlationId
                 );
                 eventPublisher.publicar(TOPICO_CONTRATOS, dto);
             }

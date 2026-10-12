@@ -6,13 +6,22 @@ spring:
     name: auditoria-service
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/freela_db}
-    username: ${DB_USER:postgres}
-    password: ${DB_PASSWORD:postgres}
+    username: freela
+    password: freela
   jpa:
+    show-sql: true
     hibernate:
       ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   kafka:
     bootstrap-servers: ${KAFKA_URL:localhost:9092}
+    consumer:
+      group-id: auditoria-group-v7
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 management:
   endpoints:
@@ -35,7 +44,7 @@ eureka:
 
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level service=${spring.application.name} thread=%thread logger=%logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level service=${spring.application.name} traceId=%X{traceId:-} spanId=%X{spanId:-} thread=%thread logger=%logger{36} - %msg%n"
   level:
     root: INFO
     br.com.freela: INFO
