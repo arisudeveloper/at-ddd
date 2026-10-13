@@ -4,8 +4,17 @@ server:
 spring:
   application:
     name: notificacao-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/notificacao_db}
+    username: ${DB_USER:freela}
+    password: ${DB_PASSWORD:freela}
+  jpa:
+    hibernate:
+      ddl-auto: update
   kafka:
     bootstrap-servers: ${KAFKA_URL:localhost:9092}
+    listener:
+      observation-enabled: true
 
 management:
   endpoints:
@@ -28,7 +37,7 @@ eureka:
 
 logging:
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level service=${spring.application.name} thread=%thread logger=%logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level service=${spring.application.name} traceId=%X{traceId:-} spanId=%X{spanId:-} correlationId=%X{correlationId:-} thread=%thread logger=%logger{36} - %msg%n"
   level:
     root: INFO
     br.com.freela: INFO

@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.slf4j.MDC;
 
 import java.util.UUID;
 
@@ -23,7 +24,6 @@ public class AuditoriaEventListener {
 
     @KafkaListener(topics = "freela.contrato.eventos", groupId = "auditoria-group-v8")
     public void consumir(String payloadJson) {
-        log.info(">>> EVENTO RECEBIDO DO KAFKA: {}", payloadJson);
         try {
             JsonNode node = objectMapper.readTree(payloadJson);
 
@@ -41,12 +41,17 @@ public class AuditoriaEventListener {
             String eventType = node.has("eventType") ? node.get("eventType").asText() : "CONTRATO_CRIADO";
             String correlationId = node.has("correlationId") ? node.get("correlationId").asText() : UUID.randomUUID().toString();
 
+            MDC.put("correlationId", correlationId);
+            log.info(">>> EVENTO RECEBIDO DO KAFKA: {}", payloadJson);
+
             auditoriaService.registrar(eventId, aggregateId, eventType, correlationId, payloadJson);
             log.info(">>> AUDITORIA PERSISTIDA COM SUCESSO NO POSTGRESQL!");
 
         } catch (Exception e) {
             log.error("Erro ao processar evento de auditoria", e);
             auditoriaService.registrar(UUID.randomUUID(), UUID.randomUUID(), "EVENTO_BRUTO", UUID.randomUUID().toString(), payloadJson);
+        } finally {
+            MDC.remove("correlationId");
         }
     }
 }
